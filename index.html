@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Blindness Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Color Blindness Simulator</h1>
+      <p>Visualize how images appear to people with different types of color blindness</p>
+    </header>
+
+    <div class="input-section">
+      <div class="upload-container">
+        <label for="image-upload" class="upload-label">
+          <div class="upload-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <span>Upload Image</span>
+          <input type="file" id="image-upload" accept="image/*" hidden>
+        </label>
+      </div>
+
+      <div class="url-container">
+        <input type="text" id="image-url" placeholder="Or paste image URL here">
+        <button id="url-submit">Load</button>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <h2>Simulation Type</h2>
+      <div class="simulation-buttons">
+        <button class="simulation-btn active" data-type="original">Original</button>
+        <button class="simulation-btn" data-type="protanopia">Protanopia (Red-Blind)</button>
+        <button class="simulation-btn" data-type="deuteranopia">Deuteranopia (Green-Blind)</button>
+        <button class="simulation-btn" data-type="tritanopia">Tritanopia (Blue-Blind)</button>
+        <button class="simulation-btn" data-type="achromatopsia">Achromatopsia (Monochrome)</button>
+      </div>
+      <div class="view-toggle">
+        <button id="side-by-side-btn" class="view-btn active">Side by Side</button>
+        <button id="grid-btn" class="view-btn">Grid View</button>
+      </div>
+    </div>
+
+    <div class="display-section">
+      <div id="loading-indicator" class="hidden">
+        <div class="spinner"></div>
+        <p>Processing image...</p>
+      </div>
+      
+      <div id="image-container" class="side-by-side hidden">
+        <div class="image-box">
+          <h3>Original</h3>
+          <div class="image-wrapper">
+            <canvas id="original-canvas"></canvas>
+          </div>
+        </div>
+        <div class="image-box">
+          <h3 id="simulation-title">Color Blind Simulation</h3>
+          <div class="image-wrapper">
+            <canvas id="simulation-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div id="grid-container" class="grid hidden">
+        <div class="image-box">
+          <h3>Original</h3>
+          <div class="image-wrapper">
+            <canvas id="grid-original-canvas"></canvas>
+          </div>
+        </div>
+        <div class="image-box">
+          <h3>Protanopia</h3>
+          <div class="image-wrapper">
+            <canvas id="grid-protanopia-canvas"></canvas>
+          </div>
+        </div>
+        <div class="image-box">
+          <h3>Deuteranopia</h3>
+          <div class="image-wrapper">
+            <canvas id="grid-deuteranopia-canvas"></canvas>
+          </div>
+        </div>
+        <div class="image-box">
+          <h3>Tritanopia</h3>
+          <div class="image-wrapper">
+            <canvas id="grid-tritanopia-canvas"></canvas>
+          </div>
+        </div>
+        <div class="image-box">
+          <h3>Achromatopsia</h3>
+          <div class="image-wrapper">
+            <canvas id="grid-achromatopsia-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <div id="no-image-message">
+        <p>Upload an image or enter a URL to see simulations</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>This tool simulates color blindness in real-time using your browser. No images are uploaded to any server.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
