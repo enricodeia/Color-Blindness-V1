@@ -2,6 +2,7 @@
 const imageUpload = document.getElementById('image-upload');
 const imageUrl = document.getElementById('image-url');
 const urlSubmit = document.getElementById('url-submit');
+const urlAlert = document.querySelector('.url-alert');
 const simulationButtons = document.querySelectorAll('.simulation-btn');
 const sideBySideBtn = document.getElementById('side-by-side-btn');
 const gridBtn = document.getElementById('grid-btn');
@@ -10,6 +11,9 @@ const gridContainer = document.getElementById('grid-container');
 const noImageMessage = document.getElementById('no-image-message');
 const loadingIndicator = document.getElementById('loading-indicator');
 const simulationTitle = document.getElementById('simulation-title');
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const toast = document.getElementById('toast');
+const toastMessage = document.getElementById('toast-message');
 
 // Canvases
 const originalCanvas = document.getElementById('original-canvas');
@@ -132,22 +136,99 @@ function handleImageUpload(event) {
 
 /**
  * Handles image loading from URL
+ * Improved with better error handling and validation
  */
 function handleImageUrl() {
   const url = imageUrl.value.trim();
-  if (url) {
-    loadImage(url);
+  
+  if (!url) {
+    showUrlError('Please enter an image URL');
+    return;
+  }
+  
+  // Basic URL validation
+  if (!isValidUrl(url)) {
+    showUrlError('Please enter a valid URL');
+    return;
+  }
+  
+  // Hide any previous error
+  hideUrlError();
+  
+  // Check if URL points to an image
+  checkImageUrl(url)
+    .then(isValid => {
+      if (isValid) {
+        loadImage(url);
+      } else {
+        showUrlError('URL does not point to a valid image');
+      }
+    })
+    .catch(error => {
+      showUrlError('Error loading image. Please check URL or CORS policy');
+      showToast('Error loading image. The server might not allow cross-origin requests.', 'error');
+      console.error('Image loading error:', error);
+    });
+}
+
+/**
+ * Validates if a string is a properly formatted URL
+ */
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
   }
 }
 
 /**
+ * Checks if a URL points to a valid image by trying to load it
+ */
+function checkImageUrl(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    
+    // Add a random parameter to bypass cache
+    img.src = url + (url.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+  });
+}
+
+/**
+ * Shows URL error message
+ */
+function showUrlError(message) {
+  urlAlert.textContent = message;
+  urlAlert.classList.add('visible');
+  imageUrl.classList.add('shake');
+  
+  // Remove shake animation after it completes
+  setTimeout(() => {
+    imageUrl.classList.remove('shake');
+  }, 600);
+}
+
+/**
+ * Hides URL error message
+ */
+function hideUrlError() {
+  urlAlert.classList.remove('visible');
+}
+
+/**
  * Loads an image from the given source (file or URL)
+ * Improved with error handling and proxy support for CORS issues
  */
 function loadImage(src) {
   showLoading();
   
   // Create a new image
   const img = new Image();
+  img.crossOrigin = 'anonymous'; // Try to load with CORS
   
   img.onload = () => {
     currentImage = img;
@@ -169,12 +250,35 @@ function loadImage(src) {
     
     noImageMessage.classList.add('hidden');
     hideLoading();
+    
+    // Show success message
+    showToast('Image loaded successfully!', 'success');
+    
+    // Clear URL input if it was loaded from a URL
+    if (src.startsWith('http')) {
+      imageUrl.value = '';
+    }
   };
   
   img.onerror = () => {
-    alert('Failed to load image. Please check the URL or try another image.');
     hideLoading();
+    
+    // If direct loading fails, try using a CORS proxy
+    if (src.startsWith('http') && !src.startsWith('https://cors-anywhere')) {
+      showToast('Trying to load image through CORS proxy...', 'info');
+      
+      // Try with a CORS proxy - Note: In a production app, you should use your own proxy
+      const corsProxyUrl = 'https://cors-anywhere.herokuapp.com/';
+      loadImage(corsProxyUrl + src);
+    } else {
+      showToast('Failed to load image. Please try a different image.', 'error');
+    }
   };
+  
+  // Add a cache-busting parameter for URLs
+  if (src.startsWith('http')) {
+    src = src + (src.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+  }
   
   // Set image source
   img.src = src;
@@ -328,7 +432,7 @@ uploadLabel.addEventListener('drop', (e) => {
   }
 });
 
-// Detect pasted image URLs
+// Add pasted image URLs with improved functionality
 imageUrl.addEventListener('paste', (e) => {
   // Let the paste happen, then process the value
   setTimeout(() => {
@@ -337,3 +441,51 @@ imageUrl.addEventListener('paste', (e) => {
     }
   }, 100);
 });
+
+// Theme toggle functionality
+themeToggleBtn.addEventListener('click', toggleTheme);
+
+/**
+ * Toggles between light and dark themes
+ */
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+  updateThemeIcons();
+}
+
+/**
+ * Updates visibility of theme icons based on current theme
+ */
+function updateThemeIcons() {
+  const lightIcon = document.getElementById('light-icon');
+  const darkIcon = document.getElementById('dark-icon');
+  
+  if (document.body.classList.contains('light-theme')) {
+    lightIcon.style.display = 'none';
+    darkIcon.style.display = 'block';
+  } else {
+    lightIcon.style.display = 'block';
+    darkIcon.style.display = 'none';
+  }
+}
+
+/**
+ * Shows a toast notification
+ */
+function showToast(message, type = 'info') {
+  // Set message and type
+  toastMessage.textContent = message;
+  toast.className = 'toast';
+  toast.classList.add(type);
+  
+  // Show the toast
+  toast.classList.add('show');
+  
+  // Auto hide after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 4000);
+}
+
+// Initialize theme icons
+updateThemeIcons();
