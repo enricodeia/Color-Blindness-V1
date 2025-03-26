@@ -14,6 +14,16 @@ const simulationTitle = document.getElementById('simulation-title');
 const themeToggleBtn = document.getElementById('theme-toggle-btn');
 const toast = document.getElementById('toast');
 const toastMessage = document.getElementById('toast-message');
+const showAnalysisToggle = document.getElementById('show-analysis');
+const highlightIssuesToggle = document.getElementById('highlight-issues');
+const simulationScore = document.getElementById('simulation-score');
+const simulationScoreBar = document.getElementById('simulation-score-bar');
+const highlightCanvas = document.getElementById('highlight-canvas');
+const analysisText = document.getElementById('analysis-text');
+const analysisPanel = document.querySelectorAll('.analysis-panel');
+const resultsSection = document.getElementById('results-section');
+const downloadReportBtn = document.getElementById('download-report');
+const recommendationsList = document.getElementById('recommendations-list');
 
 // Canvases
 const originalCanvas = document.getElementById('original-canvas');
@@ -23,6 +33,11 @@ const gridProtanopiaCanvas = document.getElementById('grid-protanopia-canvas');
 const gridDeuteranopiaCanvas = document.getElementById('grid-deuteranopia-canvas');
 const gridTritanopiaCanvas = document.getElementById('grid-tritanopia-canvas');
 const gridAchromatopsiaCanvas = document.getElementById('grid-achromatopsia-canvas');
+const gridProtanopiaHighlight = document.getElementById('grid-protanopia-highlight');
+const gridDeuteranopiaHighlight = document.getElementById('grid-deuteranopia-highlight');
+const gridTritanopiaHighlight = document.getElementById('grid-tritanopia-highlight');
+const gridAchromatopsiaHighlight = document.getElementById('grid-achromatopsia-highlight');
+const resultsChart = document.getElementById('results-chart');
 
 // Canvas contexts
 const originalCtx = originalCanvas.getContext('2d');
@@ -32,11 +47,29 @@ const gridProtanopiaCtx = gridProtanopiaCanvas.getContext('2d');
 const gridDeuteranopiaCtx = gridDeuteranopiaCanvas.getContext('2d');
 const gridTritanopiaCtx = gridTritanopiaCanvas.getContext('2d');
 const gridAchromatopsiaCtx = gridAchromatopsiaCanvas.getContext('2d');
+const highlightCtx = highlightCanvas.getContext('2d');
+const gridProtanopiaHighlightCtx = gridProtanopiaHighlight.getContext('2d');
+const gridDeuteranopiaHighlightCtx = gridDeuteranopiaHighlight.getContext('2d');
+const gridTritanopiaHighlightCtx = gridTritanopiaHighlight.getContext('2d');
+const gridAchromatopsiaHighlightCtx = gridAchromatopsiaHighlight.getContext('2d');
 
 // Current state
 let currentImage = null;
 let currentSimulationType = 'original';
 let isGridView = false;
+let accessibilityScores = {
+  original: 100,
+  protanopia: 0,
+  deuteranopia: 0,
+  tritanopia: 0,
+  achromatopsia: 0
+};
+let problemAreas = {
+  protanopia: [],
+  deuteranopia: [],
+  tritanopia: [],
+  achromatopsia: []
+};
 
 // Color blindness matrices
 const colorBlindnessMatrices = {
@@ -68,6 +101,11 @@ urlSubmit.addEventListener('click', handleImageUrl);
 imageUrl.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') handleImageUrl();
 });
+
+// Analysis toggles
+showAnalysisToggle.addEventListener('change', toggleAnalysisDisplay);
+highlightIssuesToggle.addEventListener('change', toggleProblemHighlights);
+downloadReportBtn.addEventListener('click', generateReport);
 
 simulationButtons.forEach(button => {
   button.addEventListener('click', () => {
@@ -289,10 +327,12 @@ function loadImage(src) {
  */
 function setCanvasDimensions(img) {
   const canvases = [
-    originalCanvas, simulationCanvas,
+    originalCanvas, simulationCanvas, highlightCanvas,
     gridOriginalCanvas, gridProtanopiaCanvas, 
     gridDeuteranopiaCanvas, gridTritanopiaCanvas, 
-    gridAchromatopsiaCanvas
+    gridAchromatopsiaCanvas,
+    gridProtanopiaHighlight, gridDeuteranopiaHighlight,
+    gridTritanopiaHighlight, gridAchromatopsiaHighlight
   ];
   
   canvases.forEach(canvas => {
@@ -332,6 +372,21 @@ function applySimulation(type) {
   
   // Draw transformed image
   simulationCtx.putImageData(transformedData, 0, 0);
+  
+  // Calculate accessibility score
+  if (type !== 'original') {
+    calculateAccessibilityScore(type, imageData, transformedData);
+    
+    // Update score display if analysis is shown
+    if (showAnalysisToggle.checked) {
+      updateScoreDisplay(type);
+    }
+    
+    // Generate problem highlights if enabled
+    if (highlightIssuesToggle.checked) {
+      generateProblemHighlights(type, imageData, transformedData);
+    }
+  }
 }
 
 /**
@@ -358,6 +413,31 @@ function generateAllSimulations() {
   gridDeuteranopiaCtx.putImageData(deuteranopiaData, 0, 0);
   gridTritanopiaCtx.putImageData(tritanopiaData, 0, 0);
   gridAchromatopsiaCtx.putImageData(achromatopsiaData, 0, 0);
+  
+  // Calculate accessibility scores for all types
+  calculateAccessibilityScore('protanopia', imageData, protanopiaData);
+  calculateAccessibilityScore('deuteranopia', imageData, deuteranopiaData);
+  calculateAccessibilityScore('tritanopia', imageData, tritanopiaData);
+  calculateAccessibilityScore('achromatopsia', imageData, achromatopsiaData);
+  
+  // Update all score displays if analysis is shown
+  if (showAnalysisToggle.checked) {
+    updateAllScores();
+  }
+  
+  // Generate highlights if enabled
+  if (highlightIssuesToggle.checked) {
+    generateProblemHighlights('protanopia', imageData, protanopiaData, gridProtanopiaHighlightCtx);
+    generateProblemHighlights('deuteranopia', imageData, deuteranopiaData, gridDeuteranopiaHighlightCtx);
+    generateProblemHighlights('tritanopia', imageData, tritanopiaData, gridTritanopiaHighlightCtx);
+    generateProblemHighlights('achromatopsia', imageData, achromatopsiaData, gridAchromatopsiaHighlightCtx);
+  }
+  
+  // Show results section
+  resultsSection.classList.remove('hidden');
+  
+  // Generate recommendations
+  generateRecommendations();
   
   // Also update the simulation canvas
   if (currentSimulationType === 'original') {
@@ -485,6 +565,380 @@ function showToast(message, type = 'info') {
   setTimeout(() => {
     toast.classList.remove('show');
   }, 4000);
+}
+
+/**
+ * Calculates an accessibility score by comparing original and simulated images
+ * The score is based on how much color differentiation is lost
+ */
+function calculateAccessibilityScore(type, originalData, simulatedData) {
+  const originalPixels = originalData.data;
+  const simulatedPixels = simulatedData.data;
+  
+  // Store problematic areas
+  const problemAreas = [];
+  
+  // Track color differentiation statistics
+  let totalPixels = originalPixels.length / 4;
+  let problemPixels = 0;
+  let colorLossSum = 0;
+  
+  // Sample step - check every 4th pixel for performance
+  const sampleStep = 4;
+  
+  // Compare original and simulated pixels
+  for (let i = 0; i < originalPixels.length; i += 4 * sampleStep) {
+    // Original color
+    const r1 = originalPixels[i];
+    const g1 = originalPixels[i + 1];
+    const b1 = originalPixels[i + 2];
+    
+    // Simulated color
+    const r2 = simulatedPixels[i];
+    const g2 = simulatedPixels[i + 1];
+    const b2 = simulatedPixels[i + 2];
+    
+    // Calculate color difference using Delta E formula (simplified version)
+    const colorDiff = Math.sqrt(
+      Math.pow(r1 - r2, 2) + 
+      Math.pow(g1 - g2, 2) + 
+      Math.pow(b1 - b2, 2)
+    );
+    
+    // Calculate color "uniqueness" within the original image
+    // by comparing to surrounding pixels
+    let isUniqueColor = false;
+    const pixelIndex = i / 4;
+    const x = pixelIndex % originalData.width;
+    const y = Math.floor(pixelIndex / originalData.width);
+    
+    // If color difference is significant and it's a unique color
+    if (colorDiff > 30) {
+      colorLossSum += colorDiff;
+      problemPixels++;
+      
+      // Add to problem areas if significant color loss
+      if (colorDiff > 60) {
+        problemAreas.push({
+          x: x,
+          y: y,
+          severity: Math.min(colorDiff / 255, 1)
+        });
+      }
+    }
+  }
+  
+  // Calculate score from 0-100, where 100 is perfect
+  // Invert so less color loss = higher score
+  const avgColorLoss = problemPixels > 0 ? colorLossSum / problemPixels : 0;
+  const percentProblemPixels = (problemPixels / (totalPixels / sampleStep)) * 100;
+  
+  // Score formula gives more weight to percentage of problem pixels
+  const rawScore = 100 - (percentProblemPixels * 0.7 + (avgColorLoss / 255) * 30);
+  accessibilityScores[type] = Math.max(0, Math.min(100, Math.round(rawScore)));
+  
+  // Store problem areas
+  window.problemAreas[type] = problemAreas;
+  
+  return accessibilityScores[type];
+}
+
+/**
+ * Updates the score display for the current simulation
+ */
+function updateScoreDisplay(type) {
+  if (type === 'original') return;
+  
+  // Update score value
+  simulationScore.textContent = accessibilityScores[type];
+  
+  // Update score color based on value
+  if (accessibilityScores[type] >= 80) {
+    simulationScore.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
+    simulationScore.style.color = '#4CAF50';
+  } else if (accessibilityScores[type] >= 60) {
+    simulationScore.style.backgroundColor = 'rgba(255, 170, 0, 0.2)';
+    simulationScore.style.color = '#FFAA00';
+  } else {
+    simulationScore.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
+    simulationScore.style.color = '#F44336';
+  }
+  
+  // Update score bar
+  simulationScoreBar.style.width = `${accessibilityScores[type]}%`;
+  
+  // Update analysis text
+  let analysisMessage = '';
+  if (accessibilityScores[type] >= 80) {
+    analysisMessage = `This image has good accessibility for people with ${type}. Most content should be distinguishable.`;
+  } else if (accessibilityScores[type] >= 60) {
+    analysisMessage = `This image may present moderate challenges for people with ${type}. Consider adjusting colors for better contrast.`;
+  } else {
+    analysisMessage = `This image is likely difficult to interpret for people with ${type}. Consider significant color adjustments or adding text labels.`;
+  }
+  
+  analysisText.textContent = analysisMessage;
+}
+
+/**
+ * Updates all score displays in grid view
+ */
+function updateAllScores() {
+  // Update score displays in grid view
+  document.getElementById('protanopia-score').textContent = accessibilityScores.protanopia;
+  document.getElementById('deuteranopia-score').textContent = accessibilityScores.deuteranopia;
+  document.getElementById('tritanopia-score').textContent = accessibilityScores.tritanopia;
+  document.getElementById('achromatopsia-score').textContent = accessibilityScores.achromatopsia;
+  
+  // Update score bars
+  document.getElementById('protanopia-score-bar').style.width = `${accessibilityScores.protanopia}%`;
+  document.getElementById('deuteranopia-score-bar').style.width = `${accessibilityScores.deuteranopia}%`;
+  document.getElementById('tritanopia-score-bar').style.width = `${accessibilityScores.tritanopia}%`;
+  document.getElementById('achromatopsia-score-bar').style.width = `${accessibilityScores.achromatopsia}%`;
+  
+  // Update current simulation if not in original view
+  if (currentSimulationType !== 'original') {
+    updateScoreDisplay(currentSimulationType);
+  }
+}
+
+/**
+ * Generates visual highlights for problem areas
+ */
+function generateProblemHighlights(type, originalData, simulatedData, targetCtx = null) {
+  const ctx = targetCtx || highlightCtx;
+  const problems = window.problemAreas[type];
+  
+  // Clear the canvas
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  
+  if (!problems || problems.length === 0) return;
+  
+  // Draw problem areas
+  for (const area of problems) {
+    const radius = Math.max(3, Math.ceil(area.severity * 8));
+    ctx.fillStyle = `rgba(255, 0, 0, ${area.severity * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(area.x, area.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/**
+ * Toggles the display of analysis panels
+ */
+function toggleAnalysisDisplay() {
+  const panels = document.querySelectorAll('.analysis-panel');
+  panels.forEach(panel => {
+    if (showAnalysisToggle.checked) {
+      panel.classList.remove('hidden');
+    } else {
+      panel.classList.add('hidden');
+    }
+  });
+  
+  if (showAnalysisToggle.checked && currentImage) {
+    updateAllScores();
+  }
+}
+
+/**
+ * Toggles the display of problem highlights
+ */
+function toggleProblemHighlights() {
+  const layers = document.querySelectorAll('.highlight-layer');
+  
+  layers.forEach(layer => {
+    if (highlightIssuesToggle.checked) {
+      layer.classList.remove('hidden');
+    } else {
+      layer.classList.add('hidden');
+    }
+  });
+  
+  if (highlightIssuesToggle.checked && currentImage) {
+    // Regenerate highlights for current view
+    if (!isGridView && currentSimulationType !== 'original') {
+      const imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+      const simulatedData = simulationCtx.getImageData(0, 0, simulationCanvas.width, simulationCanvas.height);
+      generateProblemHighlights(currentSimulationType, imageData, simulatedData);
+    } else if (isGridView) {
+      const imageData = gridOriginalCtx.getImageData(0, 0, gridOriginalCanvas.width, gridOriginalCanvas.height);
+      
+      // Regenerate all highlights for grid view
+      const types = ['protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia'];
+      const canvases = [gridProtanopiaCanvas, gridDeuteranopiaCanvas, gridTritanopiaCanvas, gridAchromatopsiaCanvas];
+      const highlights = [gridProtanopiaHighlightCtx, gridDeuteranopiaHighlightCtx, gridTritanopiaHighlightCtx, gridAchromatopsiaHighlightCtx];
+      
+      for (let i = 0; i < types.length; i++) {
+        const simulatedData = canvases[i].getContext('2d').getImageData(0, 0, canvases[i].width, canvases[i].height);
+        generateProblemHighlights(types[i], imageData, simulatedData, highlights[i]);
+      }
+    }
+  }
+}
+
+/**
+ * Generates recommendations based on the accessibility scores
+ */
+function generateRecommendations() {
+  let html = '<ul>';
+  const worstType = getWorstColorBlindnessType();
+  
+  // General recommendation
+  html += '<li>Consider using patterns or textures in addition to colors to convey information.</li>';
+  
+  // Specific recommendations based on scores
+  if (accessibilityScores.protanopia < 70 || accessibilityScores.deuteranopia < 70) {
+    html += '<li>Avoid red-green color combinations as they are difficult to distinguish for the most common types of color blindness.</li>';
+  }
+  
+  if (accessibilityScores.tritanopia < 70) {
+    html += '<li>Be cautious with blue-yellow combinations, especially for small elements or text.</li>';
+  }
+  
+  if (accessibilityScores.achromatopsia < 70) {
+    html += '<li>Ensure sufficient brightness contrast in grayscale for people with complete color blindness.</li>';
+  }
+  
+  // Worst type recommendation
+  if (worstType) {
+    html += `<li>This image is particularly challenging for people with ${worstType}. Consider using a color blindness simulator to test your designs.</li>`;
+  }
+  
+  // Add text labels recommendation if overall accessibility is poor
+  if (getAverageScore() < 65) {
+    html += '<li>Add text labels to convey important information that might be lost due to color blindness.</li>';
+  }
+  
+  html += '</ul>';
+  recommendationsList.innerHTML = html;
+}
+
+/**
+ * Gets the average accessibility score across all types
+ */
+function getAverageScore() {
+  const scores = [
+    accessibilityScores.protanopia,
+    accessibilityScores.deuteranopia,
+    accessibilityScores.tritanopia,
+    accessibilityScores.achromatopsia
+  ];
+  
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+
+/**
+ * Gets the worst type of color blindness for this image
+ */
+function getWorstColorBlindnessType() {
+  const types = ['protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia'];
+  let worstType = null;
+  let worstScore = 100;
+  
+  for (const type of types) {
+    if (accessibilityScores[type] < worstScore) {
+      worstScore = accessibilityScores[type];
+      worstType = type;
+    }
+  }
+  
+  return worstType;
+}
+
+/**
+ * Generates a downloadable report
+ */
+function generateReport() {
+  if (!currentImage) {
+    showToast('Please upload an image first', 'error');
+    return;
+  }
+  
+  // Create a report HTML
+  const reportHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Color Blindness Accessibility Report</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; color: #333; }
+        h1 { color: #2563eb; margin-bottom: 20px; }
+        h2 { color: #555; margin-top: 30px; margin-bottom: 15px; }
+        .score-section { display: flex; gap: 20px; flex-wrap: wrap; }
+        .score-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; width: 200px; }
+        .score-title { font-size: 1.1rem; margin-bottom: 10px; }
+        .score-value { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
+        .score-good { color: #4CAF50; }
+        .score-medium { color: #FFAA00; }
+        .score-poor { color: #F44336; }
+        .recommendations { background: #f0f7ff; border: 1px solid #cce5ff; border-radius: 8px; padding: 20px; margin-top: 30px; }
+        .recommendations h3 { color: #0d6efd; margin-top: 0; }
+        .recommendations ul { padding-left: 20px; }
+        .recommendations li { margin-bottom: 10px; }
+        footer { margin-top: 40px; color: #777; font-size: 0.9rem; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <h1>Color Blindness Accessibility Report</h1>
+      <p>This report evaluates how accessible the image is for people with different types of color blindness.</p>
+      
+      <h2>Accessibility Scores</h2>
+      <div class="score-section">
+        <div class="score-card">
+          <div class="score-title">Protanopia (Red-Blind)</div>
+          <div class="score-value ${getScoreClass(accessibilityScores.protanopia)}">${accessibilityScores.protanopia}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-title">Deuteranopia (Green-Blind)</div>
+          <div class="score-value ${getScoreClass(accessibilityScores.deuteranopia)}">${accessibilityScores.deuteranopia}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-title">Tritanopia (Blue-Blind)</div>
+          <div class="score-value ${getScoreClass(accessibilityScores.tritanopia)}">${accessibilityScores.tritanopia}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-title">Achromatopsia (Monochrome)</div>
+          <div class="score-value ${getScoreClass(accessibilityScores.achromatopsia)}">${accessibilityScores.achromatopsia}</div>
+        </div>
+      </div>
+      
+      <div class="recommendations">
+        <h3>Recommendations for Improvement</h3>
+        ${recommendationsList.innerHTML}
+      </div>
+      
+      <footer>
+        <p>Generated by Color Blindness Accessibility Analyzer on ${new Date().toLocaleDateString()}</p>
+      </footer>
+    </body>
+    </html>
+  `;
+  
+  // Convert HTML to Blob
+  const blob = new Blob([reportHTML], { type: 'text/html' });
+  
+  // Create download link
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'color-blindness-report.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showToast('Report downloaded successfully', 'success');
+}
+
+/**
+ * Returns CSS class for score coloring in report
+ */
+function getScoreClass(score) {
+  if (score >= 80) return 'score-good';
+  if (score >= 60) return 'score-medium';
+  return 'score-poor';
 }
 
 // Initialize theme icons
