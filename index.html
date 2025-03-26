@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Color Blindness Simulator</title>
+  <title>Color Blindness Accessibility Analyzer</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Color Blindness Simulator</h1>
-      <p>Visualize how images appear to people with different types of color blindness</p>
+      <h1>Color Blindness Accessibility Analyzer</h1>
+      <p>Visualize and score images for color blindness accessibility</p>
       <div class="theme-toggle">
         <button id="theme-toggle-btn">
           <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -73,6 +73,18 @@
         <button id="side-by-side-btn" class="view-btn active">Side by Side</button>
         <button id="grid-btn" class="view-btn">Grid View</button>
       </div>
+      <div class="options-toggle">
+        <label class="toggle-switch">
+          <input type="checkbox" id="show-analysis">
+          <span class="slider"></span>
+          <span class="toggle-label">Show Analysis</span>
+        </label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="highlight-issues">
+          <span class="slider"></span>
+          <span class="toggle-label">Highlight Problem Areas</span>
+        </label>
+      </div>
     </div>
 
     <div class="display-section">
@@ -87,11 +99,30 @@
           <div class="image-wrapper">
             <canvas id="original-canvas"></canvas>
           </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Accessibility Score</div>
+              <div class="score-value">100</div>
+            </div>
+          </div>
         </div>
         <div class="image-box">
           <h3 id="simulation-title">Color Blind Simulation</h3>
           <div class="image-wrapper">
             <canvas id="simulation-canvas"></canvas>
+            <canvas id="highlight-canvas" class="highlight-layer hidden"></canvas>
+          </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Accessibility Score</div>
+              <div class="score-value" id="simulation-score">--</div>
+            </div>
+            <div class="score-bar-container">
+              <div class="score-bar" id="simulation-score-bar"></div>
+            </div>
+            <div class="analysis-details">
+              <p id="analysis-text">Select a simulation type to see analysis.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -102,29 +133,75 @@
           <div class="image-wrapper">
             <canvas id="grid-original-canvas"></canvas>
           </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Score</div>
+              <div class="score-value">100</div>
+            </div>
+          </div>
         </div>
         <div class="image-box">
           <h3>Protanopia</h3>
           <div class="image-wrapper">
             <canvas id="grid-protanopia-canvas"></canvas>
+            <canvas id="grid-protanopia-highlight" class="highlight-layer hidden"></canvas>
+          </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Score</div>
+              <div class="score-value" id="protanopia-score">--</div>
+            </div>
+            <div class="score-bar-container">
+              <div class="score-bar" id="protanopia-score-bar"></div>
+            </div>
           </div>
         </div>
         <div class="image-box">
           <h3>Deuteranopia</h3>
           <div class="image-wrapper">
             <canvas id="grid-deuteranopia-canvas"></canvas>
+            <canvas id="grid-deuteranopia-highlight" class="highlight-layer hidden"></canvas>
+          </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Score</div>
+              <div class="score-value" id="deuteranopia-score">--</div>
+            </div>
+            <div class="score-bar-container">
+              <div class="score-bar" id="deuteranopia-score-bar"></div>
+            </div>
           </div>
         </div>
         <div class="image-box">
           <h3>Tritanopia</h3>
           <div class="image-wrapper">
             <canvas id="grid-tritanopia-canvas"></canvas>
+            <canvas id="grid-tritanopia-highlight" class="highlight-layer hidden"></canvas>
+          </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Score</div>
+              <div class="score-value" id="tritanopia-score">--</div>
+            </div>
+            <div class="score-bar-container">
+              <div class="score-bar" id="tritanopia-score-bar"></div>
+            </div>
           </div>
         </div>
         <div class="image-box">
           <h3>Achromatopsia</h3>
           <div class="image-wrapper">
             <canvas id="grid-achromatopsia-canvas"></canvas>
+            <canvas id="grid-achromatopsia-highlight" class="highlight-layer hidden"></canvas>
+          </div>
+          <div class="analysis-panel hidden">
+            <div class="score-container">
+              <div class="score-label">Score</div>
+              <div class="score-value" id="achromatopsia-score">--</div>
+            </div>
+            <div class="score-bar-container">
+              <div class="score-bar" id="achromatopsia-score-bar"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -148,8 +225,31 @@
       </div>
     </div>
 
+    <div class="results-section hidden" id="results-section">
+      <h2>Accessibility Summary</h2>
+      <div class="results-container">
+        <div class="results-chart-container">
+          <canvas id="results-chart"></canvas>
+        </div>
+        <div class="results-details">
+          <h3>Recommendations</h3>
+          <div id="recommendations-list">
+            <p>Upload an image to get personalized recommendations.</p>
+          </div>
+          <button id="download-report" class="action-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download Report</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <footer>
-      <p>This tool simulates color blindness in real-time using your browser. No images are uploaded to any server.</p>
+      <p>This tool simulates color blindness in real-time using your browser and provides accessibility scores. No images are uploaded to any server.</p>
     </footer>
   </div>
 
