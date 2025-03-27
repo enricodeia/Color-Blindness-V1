@@ -3,17 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Color Blindness Accessibility Analyzer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>UI Vision - Color Accessibility Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="Professional UI color accessibility analyzer for designers and developers. Test your designs against color blindness standards.">
 </head>
 <body>
-  <div class="container">
+  <div class="app-container">
     <header>
-      <h1>Color Blindness Accessibility Analyzer</h1>
-      <p>Visualize and score images for color blindness accessibility</p>
-      <div class="theme-toggle">
-        <button id="theme-toggle-btn">
+      <div class="logo">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 3C9.716 3 3 9.716 3 18C3 26.284 9.716 33 18 33C26.284 33 33 26.284 33 18C33 9.716 26.284 3 18 3Z" stroke="url(#paint0_linear)" stroke-width="3"/>
+          <path d="M13 14C14.6569 14 16 12.6569 16 11C16 9.34315 14.6569 8 13 8C11.3431 8 10 9.34315 10 11C10 12.6569 11.3431 14 13 14Z" fill="#3a86ff"/>
+          <path d="M23 14C24.6569 14 26 12.6569 26 11C26 9.34315 24.6569 8 23 8C21.3431 8 20 9.34315 20 11C20 12.6569 21.3431 14 23 14Z" fill="#8338ec"/>
+          <path d="M18 28C21.866 28 25 24.866 25 21C25 17.134 21.866 14 18 14C14.134 14 11 17.134 11 21C11 24.866 14.134 28 18 28Z" fill="#ff006e"/>
+          <defs>
+            <linearGradient id="paint0_linear" x1="3" y1="3" x2="33" y2="33" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#3a86ff"/>
+              <stop offset="1" stop-color="#ff006e"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <h1>UI Vision</h1>
+      </div>
+      <div class="controls">
+        <button id="theme-toggle" class="icon-btn" title="Toggle theme">
           <svg id="light-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -29,228 +43,442 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         </button>
+        <button id="info-btn" class="icon-btn" title="About">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
       </div>
     </header>
 
-    <div class="input-section">
-      <div class="upload-container">
-        <label for="image-upload" class="upload-label">
-          <div class="upload-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
+    <div class="content-container">
+      <div class="side-panel">
+        <div class="panel-section">
+          <h2>Upload UI Design</h2>
+          <div class="upload-area" id="upload-area">
+            <div class="upload-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="upload-text">
+              <span>Drag & drop UI design<br> or <strong>browse files</strong></span>
+            </div>
+            <input type="file" id="file-upload" accept="image/*" hidden>
+          </div>
+          <div class="url-input-wrapper">
+            <input type="text" id="image-url" placeholder="Or paste image URL here">
+            <button id="url-submit" class="primary-btn">
+              <span>Load</span>
+            </button>
+            <div class="url-alert"></div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2>Analysis Settings</h2>
+          <div class="settings-options">
+            <div class="setting-group">
+              <h3>Simulation Type</h3>
+              <div class="option-pills">
+                <button class="pill active" data-type="original">Original</button>
+                <button class="pill" data-type="protanopia">Protanopia</button>
+                <button class="pill" data-type="deuteranopia">Deuteranopia</button>
+                <button class="pill" data-type="tritanopia">Tritanopia</button>
+                <button class="pill" data-type="achromatopsia">Achromatopsia</button>
+              </div>
+            </div>
+            <div class="setting-group">
+              <h3>Analysis Type</h3>
+              <div class="option-pills">
+                <button class="pill active" data-mode="side-by-side">Side-by-Side</button>
+                <button class="pill" data-mode="grid">Grid View</button>
+              </div>
+            </div>
+            <div class="setting-group">
+              <h3>Detection Settings</h3>
+              <div class="toggle-group">
+                <label class="toggle">
+                  <input type="checkbox" id="detect-ui" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Auto-detect UI elements</span>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox" id="highlight-issues" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Highlight problem areas</span>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox" id="wcag-guidelines">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Check WCAG compliance</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section" id="export-section">
+          <h2>Export Results</h2>
+          <div class="export-buttons">
+            <button id="export-report" class="action-btn" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download Report</span>
+            </button>
+            <button id="export-json" class="action-btn" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="10" y1="12" x2="14" y2="12"></line>
+                <line x1="8" y1="16" x2="16" y2="16"></line>
+              </svg>
+              <span>Export JSON Data</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div id="loading-overlay" class="hidden">
+          <div class="spinner"></div>
+          <p>Analyzing UI design...</p>
+        </div>
+        
+        <div id="empty-state" class="empty-state">
+          <div class="empty-illustration">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M60 15C35.1472 15 15 35.1472 15 60C15 84.8528 35.1472 105 60 105C84.8528 105 105 84.8528 105 60C105 35.1472 84.8528 15 60 15Z" stroke="url(#empty_gradient)" stroke-width="4"/>
+              <path d="M40 40C44.4183 40 48 36.4183 48 32C48 27.5817 44.4183 24 40 24C35.5817 24 32 27.5817 32 32C32 36.4183 35.5817 40 40 40Z" fill="#3a86ff"/>
+              <path d="M80 40C84.4183 40 88 36.4183 88 32C88 27.5817 84.4183 24 80 24C75.5817 24 72 27.5817 72 32C72 36.4183 75.5817 40 80 40Z" fill="#8338ec"/>
+              <defs>
+                <linearGradient id="empty_gradient" x1="15" y1="15" x2="105" y2="105" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3a86ff" stop-opacity="0.4"/>
+                  <stop offset="1" stop-color="#ff006e" stop-opacity="0.4"/>
+                </linearGradient>
+              </defs>
             </svg>
           </div>
-          <span>Upload Image</span>
-          <input type="file" id="image-upload" accept="image/*" hidden>
-        </label>
-      </div>
-
-      <div class="url-container">
-        <input type="text" id="image-url" placeholder="Or paste image URL here">
-        <button id="url-submit">
-          <span>Load Image</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14"></path>
-            <path d="m12 5 7 7-7 7"></path>
-          </svg>
-        </button>
-        <div class="url-alert">Please enter a valid image URL</div>
-      </div>
-    </div>
-
-    <div class="controls-section">
-      <h2>Simulation Type</h2>
-      <div class="simulation-buttons">
-        <button class="simulation-btn active" data-type="original">Original</button>
-        <button class="simulation-btn" data-type="protanopia">Protanopia (Red-Blind)</button>
-        <button class="simulation-btn" data-type="deuteranopia">Deuteranopia (Green-Blind)</button>
-        <button class="simulation-btn" data-type="tritanopia">Tritanopia (Blue-Blind)</button>
-        <button class="simulation-btn" data-type="achromatopsia">Achromatopsia (Monochrome)</button>
-      </div>
-      <div class="view-toggle">
-        <button id="side-by-side-btn" class="view-btn active">Side by Side</button>
-        <button id="grid-btn" class="view-btn">Grid View</button>
-      </div>
-      <div class="options-toggle">
-        <label class="toggle-switch">
-          <input type="checkbox" id="show-analysis">
-          <span class="slider"></span>
-          <span class="toggle-label">Show Analysis</span>
-        </label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="highlight-issues">
-          <span class="slider"></span>
-          <span class="toggle-label">Highlight Problem Areas</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="display-section">
-      <div id="loading-indicator" class="hidden">
-        <div class="spinner"></div>
-        <p>Processing image...</p>
-      </div>
-      
-      <div id="image-container" class="side-by-side hidden">
-        <div class="image-box">
-          <h3>Original</h3>
-          <div class="image-wrapper">
-            <canvas id="original-canvas"></canvas>
-          </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Accessibility Score</div>
-              <div class="score-value">100</div>
-            </div>
-          </div>
+          <h2>Ready to Analyze UI Accessibility</h2>
+          <p>Upload your UI design or screenshot to check how it appears to users with different types of color blindness.</p>
         </div>
-        <div class="image-box">
-          <h3 id="simulation-title">Color Blind Simulation</h3>
-          <div class="image-wrapper">
-            <canvas id="simulation-canvas"></canvas>
-            <canvas id="highlight-canvas" class="highlight-layer hidden"></canvas>
+        
+        <div id="view-container" class="hidden">
+          <div class="view-tabs">
+            <div class="tab active" data-tab="visual-tab">Visual Analysis</div>
+            <div class="tab" data-tab="component-tab">Component Analysis</div>
+            <div class="tab" data-tab="report-tab">Accessibility Report</div>
           </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Accessibility Score</div>
-              <div class="score-value" id="simulation-score">--</div>
+          
+          <div id="visual-tab" class="tab-content active">
+            <div id="side-by-side-view" class="view-area">
+              <div class="image-panel">
+                <h3>Original Design</h3>
+                <div class="image-container">
+                  <canvas id="original-canvas"></canvas>
+                  <div class="ui-overlay" id="original-overlay"></div>
+                </div>
+              </div>
+              <div class="image-panel">
+                <h3 id="simulation-title">Simulation</h3>
+                <div class="image-container">
+                  <canvas id="simulation-canvas"></canvas>
+                  <canvas id="highlight-canvas" class="highlight-layer"></canvas>
+                  <div class="ui-overlay" id="simulation-overlay"></div>
+                </div>
+                <div class="score-badge">
+                  <span class="score-label">Accessibility Score</span>
+                  <span class="score-value" id="simulation-score">--</span>
+                </div>
+              </div>
             </div>
-            <div class="score-bar-container">
-              <div class="score-bar" id="simulation-score-bar"></div>
-            </div>
-            <div class="analysis-details">
-              <p id="analysis-text">Select a simulation type to see analysis.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="grid-container" class="grid hidden">
-        <div class="image-box">
-          <h3>Original</h3>
-          <div class="image-wrapper">
-            <canvas id="grid-original-canvas"></canvas>
-          </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Score</div>
-              <div class="score-value">100</div>
-            </div>
-          </div>
-        </div>
-        <div class="image-box">
-          <h3>Protanopia</h3>
-          <div class="image-wrapper">
-            <canvas id="grid-protanopia-canvas"></canvas>
-            <canvas id="grid-protanopia-highlight" class="highlight-layer hidden"></canvas>
-          </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Score</div>
-              <div class="score-value" id="protanopia-score">--</div>
-            </div>
-            <div class="score-bar-container">
-              <div class="score-bar" id="protanopia-score-bar"></div>
-            </div>
-          </div>
-        </div>
-        <div class="image-box">
-          <h3>Deuteranopia</h3>
-          <div class="image-wrapper">
-            <canvas id="grid-deuteranopia-canvas"></canvas>
-            <canvas id="grid-deuteranopia-highlight" class="highlight-layer hidden"></canvas>
-          </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Score</div>
-              <div class="score-value" id="deuteranopia-score">--</div>
-            </div>
-            <div class="score-bar-container">
-              <div class="score-bar" id="deuteranopia-score-bar"></div>
-            </div>
-          </div>
-        </div>
-        <div class="image-box">
-          <h3>Tritanopia</h3>
-          <div class="image-wrapper">
-            <canvas id="grid-tritanopia-canvas"></canvas>
-            <canvas id="grid-tritanopia-highlight" class="highlight-layer hidden"></canvas>
-          </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Score</div>
-              <div class="score-value" id="tritanopia-score">--</div>
-            </div>
-            <div class="score-bar-container">
-              <div class="score-bar" id="tritanopia-score-bar"></div>
-            </div>
-          </div>
-        </div>
-        <div class="image-box">
-          <h3>Achromatopsia</h3>
-          <div class="image-wrapper">
-            <canvas id="grid-achromatopsia-canvas"></canvas>
-            <canvas id="grid-achromatopsia-highlight" class="highlight-layer hidden"></canvas>
-          </div>
-          <div class="analysis-panel hidden">
-            <div class="score-container">
-              <div class="score-label">Score</div>
-              <div class="score-value" id="achromatopsia-score">--</div>
-            </div>
-            <div class="score-bar-container">
-              <div class="score-bar" id="achromatopsia-score-bar"></div>
+            
+            <div id="grid-view" class="view-area hidden">
+              <div class="grid-layout">
+                <div class="grid-item">
+                  <h3>Original Design</h3>
+                  <div class="image-container">
+                    <canvas id="grid-original-canvas"></canvas>
+                    <div class="ui-overlay" id="grid-original-overlay"></div>
+                  </div>
+                </div>
+                <div class="grid-item">
+                  <h3>Protanopia (Red-Blind)</h3>
+                  <div class="image-container">
+                    <canvas id="grid-protanopia-canvas"></canvas>
+                    <canvas id="grid-protanopia-highlight" class="highlight-layer"></canvas>
+                    <div class="ui-overlay" id="grid-protanopia-overlay"></div>
+                  </div>
+                  <div class="score-badge">
+                    <span class="score-label">Score</span>
+                    <span class="score-value" id="protanopia-score">--</span>
+                  </div>
+                </div>
+                <div class="grid-item">
+                  <h3>Deuteranopia (Green-Blind)</h3>
+                  <div class="image-container">
+                    <canvas id="grid-deuteranopia-canvas"></canvas>
+                    <canvas id="grid-deuteranopia-highlight" class="highlight-layer"></canvas>
+                    <div class="ui-overlay" id="grid-deuteranopia-overlay"></div>
+                  </div>
+                  <div class="score-badge">
+                    <span class="score-label">Score</span>
+                    <span class="score-value" id="deuteranopia-score">--</span>
+                  </div>
+                </div>
+                <div class="grid-item">
+                  <h3>Tritanopia (Blue-Blind)</h3>
+                  <div class="image-container">
+                    <canvas id="grid-tritanopia-canvas"></canvas>
+                    <canvas id="grid-tritanopia-highlight" class="highlight-layer"></canvas>
+                    <div class="ui-overlay" id="grid-tritanopia-overlay"></div>
+                  </div>
+                  <div class="score-badge">
+                    <span class="score-label">Score</span>
+                    <span class="score-value" id="tritanopia-score">--</span>
+                  </div>
+                </div>
+                <div class="grid-item">
+                  <h3>Achromatopsia (Monochrome)</h3>
+                  <div class="image-container">
+                    <canvas id="grid-achromatopsia-canvas"></canvas>
+                    <canvas id="grid-achromatopsia-highlight" class="highlight-layer"></canvas>
+                    <div class="ui-overlay" id="grid-achromatopsia-overlay"></div>
+                  </div>
+                  <div class="score-badge">
+                    <span class="score-label">Score</span>
+                    <span class="score-value" id="achromatopsia-score">--</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <div id="no-image-message">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-        <p>Upload an image or enter a URL to see simulations</p>
-      </div>
-      
-      <!-- Toast notification -->
-      <div id="toast" class="toast">
-        <svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-        <span id="toast-message">Message here</span>
-      </div>
-    </div>
-
-    <div class="results-section hidden" id="results-section">
-      <h2>Accessibility Summary</h2>
-      <div class="results-container">
-        <div class="results-chart-container">
-          <canvas id="results-chart"></canvas>
-        </div>
-        <div class="results-details">
-          <h3>Recommendations</h3>
-          <div id="recommendations-list">
-            <p>Upload an image to get personalized recommendations.</p>
+          
+          <div id="component-tab" class="tab-content">
+            <div class="component-analysis">
+              <div class="component-list">
+                <h3>Detected UI Elements</h3>
+                <div id="component-items">
+                  <div class="empty-components">
+                    <p>No UI elements detected yet.</p>
+                    <p>Upload a UI design to start analyzing.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="component-details">
+                <div class="empty-details">
+                  <p>Select a UI element to see detailed analysis</p>
+                </div>
+                
+                <div class="component-detail-content hidden">
+                  <h3 id="component-name">Component Name</h3>
+                  <div class="component-preview">
+                    <canvas id="component-preview-canvas"></canvas>
+                  </div>
+                  
+                  <div class="detail-section">
+                    <h4>Color Contrast</h4>
+                    <div class="contrast-info">
+                      <div class="contrast-ratio">
+                        <span class="label">Contrast Ratio:</span>
+                        <span class="value" id="contrast-ratio">--</span>
+                      </div>
+                      <div class="wcag-compliance">
+                        <div class="compliance-item">
+                          <span class="label">WCAG AA (Normal):</span>
+                          <span class="value" id="wcag-aa">--</span>
+                        </div>
+                        <div class="compliance-item">
+                          <span class="label">WCAG AA (Large):</span>
+                          <span class="value" id="wcag-aa-large">--</span>
+                        </div>
+                        <div class="compliance-item">
+                          <span class="label">WCAG AAA:</span>
+                          <span class="value" id="wcag-aaa">--</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="detail-section">
+                    <h4>Color Blindness Impact</h4>
+                    <div class="impact-scores">
+                      <div class="impact-item">
+                        <span class="label">Protanopia:</span>
+                        <div class="impact-meter">
+                          <div class="impact-bar" id="impact-protanopia"></div>
+                        </div>
+                        <span class="value" id="impact-protanopia-value">--</span>
+                      </div>
+                      <div class="impact-item">
+                        <span class="label">Deuteranopia:</span>
+                        <div class="impact-meter">
+                          <div class="impact-bar" id="impact-deuteranopia"></div>
+                        </div>
+                        <span class="value" id="impact-deuteranopia-value">--</span>
+                      </div>
+                      <div class="impact-item">
+                        <span class="label">Tritanopia:</span>
+                        <div class="impact-meter">
+                          <div class="impact-bar" id="impact-tritanopia"></div>
+                        </div>
+                        <span class="value" id="impact-tritanopia-value">--</span>
+                      </div>
+                      <div class="impact-item">
+                        <span class="label">Achromatopsia:</span>
+                        <div class="impact-meter">
+                          <div class="impact-bar" id="impact-achromatopsia"></div>
+                        </div>
+                        <span class="value" id="impact-achromatopsia-value">--</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="detail-section">
+                    <h4>Recommended Colors</h4>
+                    <div class="color-recommendations" id="color-recommendations">
+                      <!-- Dynamic recommendations will be inserted here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <button id="download-report" class="action-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>Download Report</span>
-          </button>
+          
+          <div id="report-tab" class="tab-content">
+            <div class="report-summary">
+              <div class="report-header">
+                <h2>Accessibility Report</h2>
+                <p class="report-timestamp">Generated on <span id="report-date">--</span></p>
+              </div>
+              
+              <div class="score-overview">
+                <div class="overall-score">
+                  <div class="score-circle" id="overall-score-circle">
+                    <span id="overall-score">--</span>
+                  </div>
+                  <h3>Overall Score</h3>
+                  <p>Average accessibility across all types of color blindness</p>
+                </div>
+                
+                <div class="score-breakdown">
+                  <h3>Score Breakdown</h3>
+                  <div class="score-bars">
+                    <div class="score-bar-item">
+                      <span class="label">Protanopia:</span>
+                      <div class="score-meter">
+                        <div class="score-meter-bar" id="score-bar-protanopia"></div>
+                      </div>
+                      <span class="value" id="score-bar-protanopia-value">--</span>
+                    </div>
+                    <div class="score-bar-item">
+                      <span class="label">Deuteranopia:</span>
+                      <div class="score-meter">
+                        <div class="score-meter-bar" id="score-bar-deuteranopia"></div>
+                      </div>
+                      <span class="value" id="score-bar-deuteranopia-value">--</span>
+                    </div>
+                    <div class="score-bar-item">
+                      <span class="label">Tritanopia:</span>
+                      <div class="score-meter">
+                        <div class="score-meter-bar" id="score-bar-tritanopia"></div>
+                      </div>
+                      <span class="value" id="score-bar-tritanopia-value">--</span>
+                    </div>
+                    <div class="score-bar-item">
+                      <span class="label">Achromatopsia:</span>
+                      <div class="score-meter">
+                        <div class="score-meter-bar" id="score-bar-achromatopsia"></div>
+                      </div>
+                      <span class="value" id="score-bar-achromatopsia-value">--</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="report-sections">
+                <div class="report-section">
+                  <h3>UI Components Analysis</h3>
+                  <div class="component-summary" id="component-summary">
+                    <p>No UI components have been analyzed yet.</p>
+                  </div>
+                </div>
+                
+                <div class="report-section">
+                  <h3>Critical Issues</h3>
+                  <div class="issues-list" id="critical-issues">
+                    <p>No critical issues detected.</p>
+                  </div>
+                </div>
+                
+                <div class="report-section">
+                  <h3>Recommendations</h3>
+                  <div class="recommendations-list" id="recommendations-list">
+                    <ul>
+                      <li>Upload a UI design to get personalized recommendations.</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div class="report-section">
+                  <h3>WCAG 2.1 Compliance</h3>
+                  <div class="wcag-summary" id="wcag-summary">
+                    <p>Enable WCAG analysis in settings to see compliance details.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
     
-    <footer>
-      <p>This tool simulates color blindness in real-time using your browser and provides accessibility scores. No images are uploaded to any server.</p>
-    </footer>
+    <!-- Modal for info/about -->
+    <div id="info-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>About UI Vision</h2>
+          <button class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <p>UI Vision helps designers and developers create more accessible user interfaces by simulating how they appear to users with different types of color blindness.</p>
+          
+          <h3>Types of Color Blindness</h3>
+          <ul>
+            <li><strong>Protanopia:</strong> Red-blind, reduced sensitivity to red light</li>
+            <li><strong>Deuteranopia:</strong> Green-blind, reduced sensitivity to green light</li>
+            <li><strong>Tritanopia:</strong> Blue-blind, reduced sensitivity to blue light</li>
+            <li><strong>Achromatopsia:</strong> Complete color blindness, seeing only in grayscale</li>
+          </ul>
+          
+          <h3>Features</h3>
+          <ul>
+            <li>Analyze UI designs for color accessibility issues</li>
+            <li>Automatically detect UI components and evaluate contrast ratios</li>
+            <li>Measure compliance with WCAG 2.1 accessibility guidelines</li>
+            <li>Generate detailed reports with actionable recommendations</li>
+          </ul>
+          
+          <p class="about-footer">Created with ❤️ for accessibility. Version 1.0</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Toast notifications -->
+    <div id="toast" class="toast">
+      <svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span id="toast-message">Message here</span>
+    </div>
   </div>
 
   <script src="script.js"></script>
